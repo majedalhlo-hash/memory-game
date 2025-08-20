@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>لعبة المطابقة الذكية الدينية – مراحل</title>
+<style>
+body { font-family: Arial, sans-serif; background: #fdf6e3; text-align: center; }
+h2 { color: #2c3e50; margin-top: 20px; }
+#instructions { margin: 10px auto; font-size: 18px; color: #34495e; }
+#author { margin-top: 10px; font-size: 16px; color: #7f8c8d; }
+.grid { display: grid; gap: 15px; justify-content: center; margin-top: 20px; }
+.card { width: 120px; height: 120px; background: #3498db; color: white; 
+       display: flex; justify-content: center; align-items: center; font-size: 16px;
+       cursor: pointer; border-radius: 10px; user-select: none; transition: transform 0.3s; }
+.card.correct { background: #2ecc71; transform: scale(1.1); }
+.card.wrong { background: #e74c3c; transform: scale(0.9); }
+#attempts { margin-top: 15px; font-size: 18px; color: #2c3e50; }
+#level { margin-top: 5px; font-size: 18px; color: #2c3e50; }
+</style>
+</head>
+<body>
+<h2>لعبة المطابقة الذكية الدينية</h2>
+<div id="instructions">اقلب بطاقتين لإيجاد الزوج المتطابق. أكمل كل مرحلة للانتقال إلى التالية.</div>
+<div id="author">من إعداد المحامي ماجد الحلو</div>
+<div id="level">المرحلة: 1</div>
+<div class="grid" id="game"></div>
+<div id="attempts">عدد المحاولات: 0</div>
+
+<script>
+const allCards = [
+  {text: "الله أكبر", icon: "🌙"},
+  {text: "الحمد لله", icon: "🌸"},
+  {text: "سبحان الله", icon: "💧"},
+  {text: "لا إله إلا الله", icon: "⭐"},
+  {text: "الرحمن", icon: "🌞"},
+  {text: "الرحيم", icon: "☁️"},
+  {text: "بسم الله", icon: "🕌"},
+  {text: "إن شاء الله", icon: "🕊️"}
+];
+
+let currentLevel = 1;
+let attempts = 0;
+let firstCard = null, secondCard = null, lock = false;
+
+const game = document.getElementById("game");
+const attemptsDisplay = document.getElementById("attempts");
+const levelDisplay = document.getElementById("level");
+
+function startLevel(level) {
+  attempts = 0;
+  attemptsDisplay.textContent = "عدد المحاولات: " + attempts;
+  levelDisplay.textContent = "المرحلة: " + level;
+  game.innerHTML = "";
+
+  let numPairs;
+  if(level === 1) numPairs = 4;
+  else if(level === 2) numPairs = 6;
+  else numPairs = 8;
+
+  let gameCards = allCards.slice(0, numPairs).flatMap(c => [{...c},{...c}]);
+  gameCards.sort(() => 0.5 - Math.random());
+
+  gameCards.forEach((cardData) => {
+    const card = document.createElement("div");
+    card.classList.add("card");
+    card.dataset.text = cardData.text;
+    card.dataset.icon = cardData.icon;
+    card.innerHTML = "?";
+    card.addEventListener("click", () => flipCard(card));
+    game.appendChild(card);
+  });
+}
+
+function flipCard(card) {
+  if(lock || card.innerHTML !== "?") return;
+  card.innerHTML = card.dataset.icon + "<br>" + card.dataset.text;
+
+  if(!firstCard) {
+    firstCard = card;
+  } else {
+    secondCard = card;
+    lock = true;
+    attempts++;
+    attemptsDisplay.textContent = "عدد المحاولات: " + attempts;
+
+    if(firstCard.dataset.text === secondCard.dataset.text) {
+      firstCard.classList.add("correct");
+      secondCard.classList.add("correct");
+      firstCard = secondCard = null;
+      lock = false;
+      checkWin();
+    } else {
+      firstCard.classList.add("wrong");
+      secondCard.classList.add("wrong");
+      setTimeout(() => {
+        firstCard.innerHTML = "?";
+        secondCard.innerHTML = "?";
+        firstCard.classList.remove("wrong");
+        secondCard.classList.remove("wrong");
+        firstCard = secondCard = null;
+        lock = false;
+      }, 1500);
+    }
+  }
+}
+
+function checkWin() {
+  const matched = document.querySelectorAll(".card.correct");
+  const numPairs = game.querySelectorAll(".card").length / 2;
+  if(matched.length === numPairs * 2) {
+    if(currentLevel < 3) {
+      currentLevel++;
+      alert("مبروك! انتقلت إلى المرحلة " + currentLevel);
+      startLevel(currentLevel);
+    } else {
+      setTimeout(() => alert("مبروك! أكملت جميع المراحل بعد " + attempts + " محاولة في المرحلة الأخيرة."), 100);
+    }
+  }
+}
+
+// ابدأ اللعبة بالمرحلة الأولى
+startLevel(currentLevel);
+</script>
+</body>
+</html>
